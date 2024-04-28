@@ -33,13 +33,13 @@ const getUserByIdFirebase = async(client, idFirebase)=>{
         `,
         [idFirebase]
     );
-    return convertSnakeToCamel.keysToCamel(rows);
+    return convertSnakeToCamel.keysToCamel(rows[0]);
 }
 const deleteUser = async (client, userId) => {
     const { rows } = await client.query(
       `UPDATE "user" as u
           SET is_delete = TRUE, upated_at = now()
-          WHERE id = $1
+          WHERE email = $1
           RETURNING *
           `,
       [userId],

@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
     // db/db.js에 정의한 connect 함수를 통해 connection pool에서 connection을 빌려옵니다.
     client = await db.connect(req);
     const decodedToken=jwtHandlers.verify(accesstoken);
-    const userId=decodedToken.id;
+    const userId=decodedToken.email;
     if(!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NO_USER));
     
     const deleteUser = await userDB.deleteUser(client,userId);

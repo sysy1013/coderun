@@ -21,5 +21,7 @@ module.exports = {
   
     // 유저 관련
     READ_USER_SUCCESS: '유저 조회 성공',
+    PASSWORD_CHANGE_SUCCESS: '비밀번호 변경 성공',
+
 
   };

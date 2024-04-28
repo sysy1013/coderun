@@ -1,7 +1,6 @@
 //이름 아이디 성별 생년월일 비밀번호 비밀번호 확인
 const functions = require('firebase-functions');
 const util = require('../../../lib/util');
-const admin = require('firebase-admin');
 const statusCode = require('../../../constants/statusCode');
 const { signInWithEmailAndPassword } = require('firebase/auth');
 const responseMessage = require('../../../constants/responseMessage');
@@ -19,16 +18,17 @@ module.exports = async (req, res) => {
     return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
   } 
 
-  if(password.length < 8) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.PASSWORD_LENGTH_SHORT));
-
   
   let client;
   try {
     client = await db.connect(req);
-    const userFirebase = await signInWithEmailAndPassword(firebaseAuth, email, password).then(user=>(user)).catch((e)=>{
+
+    const userFirebase = await signInWithEmailAndPassword(firebaseAuth, email, password)
+      .then((user) => user)
+      .catch((e) => {
         console.log(e);
-        return {err:true, error:e};
-    });
+        return { err: true, error: e };
+      });
 
     if (userFirebase.err) {
         if (userFirebase.error.code === 'auth/user-not-found') {
