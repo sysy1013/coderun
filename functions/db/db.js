@@ -32,8 +32,8 @@ console.log(`[🔥DB] ${process.env.NODE_ENV}`);
 // 커넥션 풀을 생성해줍니다.
 const pool = new Pool({
   ...dbConfig,
-  connectionTimeoutMillis: 120 * 1000,
-  idleTimeoutMillis: 120 * 1000,
+  connectionTimeoutMillis: 60 * 1000,
+  idleTimeoutMillis: 60 * 1000,
 });
 
 // 위에서 생성한 커넥션 풀에서 커넥션을 빌려오는 함수를 정의합니다.
@@ -56,7 +56,7 @@ const connect = async (req) => {
       ? console.error('[ERROR] client connection이 60초 동안 릴리즈되지 않았습니다.', { callStack })
       : functions.logger.error('[ERROR] client connection이 120초 동안 릴리즈되지 않았습니다.', { callStack });
     devMode ? console.error(`마지막으로 실행된 쿼리문입니다. ${client.lastQuery}`) : functions.logger.error(`마지막으로 실행된 쿼리문입니다. ${client.lastQuery}`);
-  }, 120 * 1000);
+  }, 60 * 1000);
 
   client.query = (...args) => {
     client.lastQuery = args;
