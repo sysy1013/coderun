@@ -37,29 +37,42 @@ module.exports = async (req, res) => {
     }
 
     try {
-        client = await db.connect(req);
-        const decodedToken = jwtHandlers.verify(accesstoken);
-        const userId = decodedToken.email;
-        if (!userId) {
-            return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NO_USER));
-        }
-
         // 사용자로부터 받은 코드를 PythonShell을 통해 실행
+        console.log('Executing Python code...');
         let result;
         try {
             result = await runPythonCode(solve);
+            console.log('Python code executed successfully:', result);
         } catch (err) {
+            console.log('Error executing Python code:', err);
+            if (client) {
+                client.release();  // 오류 발생 시 클라이언트 릴리스
+            }
             return res.status(500).send({ error: err.message });
         }
 
+        console.log('Connecting to the database...');
+        client = await db.connect(req);
+
+        const decodedToken = jwtHandlers.verify(accesstoken);
+        const userId = decodedToken.email;
+        if (!userId) {
+            console.log('User not found in the token.');
+            client.release();
+            return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NO_USER));
+        }
+
         // 해당 사용자의 질문 리스트 가져오기
+        console.log('Fetching question list from the database...');
         const questionList = await questionDB.getUserByQuestion(client, userId);
 
-        // 여기서 문제 DB찾아서 집어 넣을때 문제의 ID를 찾기보단 created_at을 기준으로 가장 최근에 만들어진게 해당 sol이기 때문에 가장 최근것의 id를 해당 DB에다가 넣어서 찾자
-        console.log(questionList);
+        // 여기서 문제 DB찾아서 집어 넣을 때 문제의 ID를 찾기보단 created_at을 기준으로 가장 최근에 만들어진게 해당 sol이기 때문에 가장 최근 것의 id를 해당 DB에다가 넣어서 찾자
+        console.log('User question list:', questionList);
 
         const latestQuestion = questionList[0];
         if (!latestQuestion) {
+            console.log('No questions found for the user.');
+            client.release();
             return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_QUESTION));
         }
         const questionId = latestQuestion.id;
