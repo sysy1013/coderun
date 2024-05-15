@@ -12,10 +12,12 @@ dotenv.config();
 
 async function processDatabaseAndRespond(client, userId, solve, result, res) {
     try {
+        console.log('Processing database response...');
         const questionList = await questionDB.getUserByQuestion(client, userId);
 
         const latestQuestion = questionList[0];
         if (!latestQuestion) {
+            console.log('No questions found for the user.');
             client.release();  // 클라이언트 릴리스
             return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_QUESTION));
         }
@@ -25,12 +27,13 @@ async function processDatabaseAndRespond(client, userId, solve, result, res) {
         const saveSolve = await questionDB.solvequestion(client, userId, questionId, solve, result);
 
         // 결과를 반환합니다.
+        console.log('Solution saved successfully.');
         client.release();  // 클라이언트 릴리스
         res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.CREATE_SUCCESS, saveSolve));
     } catch (error) {
+        console.log('Error processing database response:', error);
         client.release();  // 클라이언트 릴리스
         functions.logger.error(`[ERROR] [${res.req.method.toUpperCase()}] ${res.req.originalUrl}`, `[CONTENT] ${error}`);
-        console.log(error);
         res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
     }
 }
@@ -46,14 +49,17 @@ module.exports = async (req, res) => {
     }
 
     try {
+        console.log('Connecting to the database...');
         client = await db.connect(req);
         const decodedToken = jwtHandlers.verify(accesstoken);
         const userId = decodedToken.email;
         if (!userId) {
+            console.log('User not found in the token.');
             client.release();  // 클라이언트 릴리스
             return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NO_USER));
         }
 
+        console.log('Executing Python code...');
         // 사용자로부터 받은 코드를 PythonShell을 통해 실행
         const options = {
             mode: 'text',
@@ -65,20 +71,21 @@ module.exports = async (req, res) => {
         // Python 코드 실행
         PythonShell.runString(solve, options, function (err, results) {
             if (err) {
+                console.log('Error executing Python code:', err);
                 client.release();  // 오류 발생 시 클라이언트 릴리스
-                const fault = err.message;
-                return res.status(500).send({ error: fault });
+                return res.status(500).send({ error: err.message });
             }
+            console.log('Python code executed successfully:', results);
             const result = results.join('\n');
             processDatabaseAndRespond(client, userId, solve, result, res);
         });
 
     } catch (error) {
+        console.log('Error in main try block:', error);
         if (client) {
             client.release();
         }
         functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
-        console.log(error);
         res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
     }
 };
