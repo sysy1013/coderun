@@ -4,6 +4,9 @@ const router = express.Router();
 
 router.post('/signup', require('./authSignupPOST'));
 router.post('/login/email', require('./authLoginEmailPOST'));
-router.post('/pwChange', require('./authPwChangePUT'));
+
+//사용불가 2순위
+router.post('/pwChange', require('./authPwChangePUT')); 
+
 
 module.exports = router;

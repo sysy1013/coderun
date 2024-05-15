@@ -28,7 +28,9 @@
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
-    "pg": "^8.11.5"
+    "openai": "^4.0.0",
+    "pg": "^8.11.5",
+    "python-shell": "^5.0.0"
   },
   "devDependencies": {
     "eslint": "^8.15.0",
