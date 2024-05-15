@@ -10,32 +10,20 @@ const { PythonShell } = require('python-shell');
 
 dotenv.config();
 
-async function processDatabaseAndRespond(client, userId, solve, result, res) {
-    try {
-        console.log('Processing database response...');
-        const questionList = await questionDB.getUserByQuestion(client, userId);
+function runPythonCode(code) {
+    return new Promise((resolve, reject) => {
+        const options = {
+            mode: 'text',
+            pythonOptions: ['-u']
+        };
 
-        const latestQuestion = questionList[0];
-        if (!latestQuestion) {
-            console.log('No questions found for the user.');
-            client.release();  // 클라이언트 릴리스
-            return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_QUESTION));
-        }
-        const questionId = latestQuestion.id;
-
-        // 제출된 솔루션을 데이터베이스에 저장
-        const saveSolve = await questionDB.solvequestion(client, userId, questionId, solve, result);
-
-        // 결과를 반환합니다.
-        console.log('Solution saved successfully.');
-        client.release();  // 클라이언트 릴리스
-        res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.CREATE_SUCCESS, saveSolve));
-    } catch (error) {
-        console.log('Error processing database response:', error);
-        client.release();  // 클라이언트 릴리스
-        functions.logger.error(`[ERROR] [${res.req.method.toUpperCase()}] ${res.req.originalUrl}`, `[CONTENT] ${error}`);
-        res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
-    }
+        PythonShell.runString(code, options, (err, results) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(results ? results.join('\n') : '');
+        });
+    });
 }
 
 module.exports = async (req, res) => {
@@ -49,43 +37,48 @@ module.exports = async (req, res) => {
     }
 
     try {
-        console.log('Connecting to the database...');
         client = await db.connect(req);
         const decodedToken = jwtHandlers.verify(accesstoken);
         const userId = decodedToken.email;
         if (!userId) {
-            console.log('User not found in the token.');
-            client.release();  // 클라이언트 릴리스
             return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NO_USER));
         }
 
-        console.log('Executing Python code...');
         // 사용자로부터 받은 코드를 PythonShell을 통해 실행
-        const options = {
-            mode: 'text',
-            pythonOptions: ['-u'], // '-u' 옵션은 stdio를 unbuffered 모드로 실행
-            scriptPath: '', // 필요한 경우 Python 스크립트 경로 지정
-            args: [solve]
-        };
+        let result;
+        try {
+            result = await runPythonCode(solve);
+        } catch (err) {
+            return res.status(500).send({ error: err.message });
+        }
 
-        // Python 코드 실행
-        PythonShell.runString(solve, options, function (err, results) {
-            if (err) {
-                console.log('Error executing Python code:', err);
-                client.release();  // 오류 발생 시 클라이언트 릴리스
-                return res.status(500).send({ error: err.message });
-            }
-            console.log('Python code executed successfully:', results);
-            const result = results.join('\n');
-            processDatabaseAndRespond(client, userId, solve, result, res);
-        });
+        // 해당 사용자의 질문 리스트 가져오기
+        const questionList = await questionDB.getUserByQuestion(client, userId);
+
+        // 여기서 문제 DB찾아서 집어 넣을때 문제의 ID를 찾기보단 created_at을 기준으로 가장 최근에 만들어진게 해당 sol이기 때문에 가장 최근것의 id를 해당 DB에다가 넣어서 찾자
+        console.log(questionList);
+
+        const latestQuestion = questionList[0];
+        if (!latestQuestion) {
+            return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_QUESTION));
+        }
+        const questionId = latestQuestion.id;
+        console.log(questionId);
+
+        // 제출된 솔루션을 데이터베이스에 저장
+        const saveSolve = await questionDB.solvequestion(client, userId, questionId, solve, result);
+
+        // 결과를 반환합니다.
+        res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.CREATE_SUCCESS, saveSolve));
 
     } catch (error) {
-        console.log('Error in main try block:', error);
+        functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
+        console.log(error);
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
+
+    } finally {
         if (client) {
             client.release();
         }
-        functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
-        res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
     }
 };

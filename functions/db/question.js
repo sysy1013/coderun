@@ -14,14 +14,14 @@ const newquestion = async(client, email, questionText, answerText,result)=>{
 }
 
 // 푼 문제 저장하는거
-const solvequestion = async(client, questionId, email, solve)=>{
+const solvequestion = async(client, questionId, email, inputSovle, result)=>{
     const { rows } = await client.query(
         `
-        INSERT INTO solutions (question_id, email, solve, created_at)
-        VALUES ($1, $2, $3, NOW())
+        INSERT INTO solve (question_id, email, input_sovle,result,created_at)
+        VALUES ($1, $2, $3,$4, NOW())
         RETURNING *;
         `,
-        [questionId, email, solve]
+        [questionId, email, inputSovle,result]
     );
     return convertSnakeToCamel.keysToCamel(rows[0]);
 }
