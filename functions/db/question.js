@@ -39,7 +39,28 @@ const getUserByQuestion = async (client, email) => {
     return convertSnakeToCamel.keysToCamel(rows);
 };
 
+const getQeustionByanswer = async (client, questionId) => {
+    const { rows } = await client.query(
+        `
+        SELECT question_text, result FROM question
+        WHERE id = $1
+        `,
+        [questionId]
+    );
+    return convertSnakeToCamel.keysToCamel(rows[0]);
+}
 
+const savequalquestion = async (client, questionId,email,answer,answerData)=>{   
+    const { rows } = await client.query(
+    `
+    INSERT INTO slist (question_id, email, answer, answer_data,created_at,updated_at)
+        VALUES ($1, $2, $3, $4, NOW(),NOW())
+        RETURNING *;
+    `,
+    [questionId,email,answer,answerData]
+);
+return convertSnakeToCamel.keysToCamel(rows);
 
+}
 
-module.exports = {newquestion,solvequestion,getUserByQuestion};
+module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion};

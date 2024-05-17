@@ -10,7 +10,7 @@ const { execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-
+const { evaluateWithGPT } = require('./gptEvaluator');
 dotenv.config();
 
 function runPythonCode(code) {
@@ -88,7 +88,24 @@ module.exports = async (req, res) => {
         console.log('Latest question ID:', questionId);
 
         const saveSolve = await questionDB.solvequestion(client, questionId,userId, solve, result);
-        res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.CREATE_SUCCESS, saveSolve));
+
+        const questionanswer = await questionDB.getQeustionByanswer(client, questionId);
+        console.log('questionanswer:', questionanswer); // 디버깅을 위해 추가
+
+        if (!questionanswer) {
+            console.log('No answer found for the question.');
+            client.release();
+            return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_QUESTION));
+        }
+
+        const feedback = await evaluateWithGPT(questionanswer.questionText, questionanswer.result, result);
+
+        
+        const saveeqaul = await questionDB.savequalquestion(client,questionId,userId,feedback.tf,feedback.data);
+
+
+        res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.CREATE_SUCCESS, saveeqaul));
+
 
     } catch (error) {
         functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
