@@ -4,5 +4,6 @@ const router = express.Router();
 
 router.post('/newquestion', require('./newQuestionPOST'));
 router.post('/solvequestion', require('./solveQuestionPost'));
+router.get('/similarquestion',require('./similarQuestionGET'))
 
 module.exports = router;

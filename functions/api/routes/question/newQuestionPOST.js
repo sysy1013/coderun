@@ -50,7 +50,6 @@ module.exports = async (req, res) => {
     const { topic } = req.body;
     let client;
 
-    console.log(accesstoken);
 
     if (!accesstoken) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
@@ -78,7 +77,7 @@ module.exports = async (req, res) => {
 
 
         // 문제를 데이터베이스에 저장
-        const savedQuestion = await questionDB.newquestion(client, userId, generatedContent.problem, generatedContent.solution,generatedContent.result);
+        const savedQuestion = await questionDB.newquestion(client, userId, generatedContent.problem, generatedContent.solution,generatedContent.result,topic);
 
         // 저장된 데이터와 성공 메시지 전송
         res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.CREATE_SUCCESS, savedQuestion));

@@ -1,14 +1,14 @@
 const convertSnakeToCamel = require('../lib/convertSnakeToCamel');
 
 //새로운 문제 만들기
-const newquestion = async(client, email, questionText, answerText,result)=>{
+const newquestion = async(client, email, questionText, answerText,result,topic)=>{
     const {rows} = await client.query(
                 `
-                INSERT INTO question (email, question_text, answer_text,result, created_at)
-                VALUES ($1, $2, $3,$4, NOW())
+                INSERT INTO question (email, question_text, answer_text,result, created_at,topic)
+                VALUES ($1, $2, $3,$4, NOW(),$5)
                 RETURNING *;
                 `,
-                [email, questionText, answerText,result]
+                [email, questionText, answerText,result,topic]
             );
             return convertSnakeToCamel.keysToCamel(rows[0]);
 }
@@ -60,7 +60,26 @@ const savequalquestion = async (client, questionId,email,answer,answerData)=>{
     [questionId,email,answer,answerData]
 );
 return convertSnakeToCamel.keysToCamel(rows);
-
 }
 
-module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion};
+const getUserByQuestionAndTopic =async (client, questionId) => {
+    const { rows } = await client.query(
+        `
+        SELECT question_text, topic FROM question
+        WHERE id = $1
+        `,
+        [questionId]
+    );
+    return convertSnakeToCamel.keysToCamel(rows[0]);
+}
+
+const getProblemsByTopic = async (client, topic) => {
+    const { rows } = await client.query(`
+        SELECT id, question_text AS text, topic
+        FROM question
+        WHERE topic = $1
+    `, [topic]);
+    return convertSnakeToCamel.keysToCamel(rows);
+};
+
+module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion,getUserByQuestionAndTopic,getProblemsByTopic};
