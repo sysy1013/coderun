@@ -1,4 +1,6 @@
 const { spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 const functions = require('firebase-functions');
 const util = require('../../../lib/util');
 const statusCode = require('../../../constants/statusCode');
@@ -9,9 +11,9 @@ const { questionDB } = require('../../../db');
 const dotenv = require('dotenv');
 dotenv.config();
 
-function recommendProblems(userProblemText, topicProblems) {
+function recommendProblems(userProblemText, csvFilePath) {
     return new Promise((resolve, reject) => {
-        const pyProg = spawn('python3', ['/Users/sonsihyeong/desktop/jejuuiv/coderun/functions/api/routes/question/recommend_problems.py', userProblemText, JSON.stringify(topicProblems)]);
+        const pyProg = spawn('python3', ['/Users/sonsihyeong/desktop/jejuuiv/coderun/functions/api/routes/question/recommend_problems.py', userProblemText, csvFilePath]);
 
         let data = '';
         pyProg.stdout.on('data', (chunk) => {
@@ -24,19 +26,24 @@ function recommendProblems(userProblemText, topicProblems) {
         });
 
         pyProg.stdout.on('end', () => {
-            resolve(JSON.parse(data));
+            try {
+                resolve(JSON.parse(data));
+            } catch (err) {
+                reject(err);
+            }
         });
     });
 }
 
 module.exports = async (req, res) => {
-    const { accesstoken,problemid } = req.headers;
+    const { accesstoken, problemid } = req.headers;
 
     if (!problemid || !accesstoken) {
         return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
     }
 
     let client;
+    const csvFilePath = path.join(__dirname, 'topic_problems.csv');
 
     try {
         client = await db.connect(req);
@@ -55,8 +62,14 @@ module.exports = async (req, res) => {
         // 특정 주제의 문제들을 가져오기
         const topicProblems = await questionDB.getProblemsByTopic(client, topic);
 
+        // CSV 파일로 저장
+        const csvData = topicProblems.map((q) => `${q.id},"${q.text.replace(/"/g, '""')}"`).join('\n');
+        fs.writeFileSync(csvFilePath, `id,text\n${csvData}`, 'utf8');
+
         // 유사한 문제를 추천
-        const recommendedProblem = await recommendProblems(questionText, topicProblems);
+        const recommendedProblem = await recommendProblems(questionText, csvFilePath);
+
+        //const searchProblem = await questionDB.
 
         res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, { recommendedProblem }));
 
@@ -68,6 +81,11 @@ module.exports = async (req, res) => {
     } finally {
         if (client) {
             client.release();
+        }
+
+        // CSV 파일 삭제
+        if (fs.existsSync(csvFilePath)) {
+            fs.unlinkSync(csvFilePath);
         }
     }
 };

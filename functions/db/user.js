@@ -46,4 +46,5 @@ const deleteUser = async (client, userId) => {
     );
     return convertSnakeToCamel.keysToCamel(rows[0]);
   };
+
 module.exports = {getAllUser,signupUser,getUserByIdFirebase,deleteUser};
