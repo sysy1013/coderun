@@ -128,4 +128,14 @@ const repeatQuestionSolve = async (client, email, questionId) => {
     );
     return convertSnakeToCamel.keysToCamel(rows[0]);
 }
-module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion,getUserByQuestionAndTopic,getProblemsByTopic,getQuestionCountByTopic,getQuestionsWithStatus,repeatQuestionSolve};
+const getQeustionByQanswer = async (client, questionId) => {
+    const { rows } = await client.query(
+        `
+        SELECT answer_text, result FROM question
+        WHERE id = $1
+        `,
+        [questionId]
+    );
+    return convertSnakeToCamel.keysToCamel(rows[0]);
+}
+module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion,getUserByQuestionAndTopic,getProblemsByTopic,getQuestionCountByTopic,getQuestionsWithStatus,repeatQuestionSolve,getQeustionByQanswer};
