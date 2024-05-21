@@ -8,9 +8,8 @@ const dotenv = require('dotenv');
 const { userDB, questionDB } = require('../../../db');
 
 module.exports = async (req, res) => {
-  const { accesstoken } = req.headers; // headers 수정
+  const { accesstoken } = req.headers;
 
-  // 필요한 값이 없을 때 보내주는 response
   if (!accesstoken) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   let client;
@@ -25,17 +24,9 @@ module.exports = async (req, res) => {
       return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NO_USER));
     }
 
-    const questionCountByTopic = await questionDB.getQuestionCountByTopic(client, userId);
+    const questionListWithStatus = await questionDB.getQuestionsWithStatus(client, userId);
 
-    // 결과를 객체 형태로 조립
-    const formattedResult = questionCountByTopic.reduce((acc, curr, index) => {
-      acc[`topic${index + 1}`] = curr.topic;
-      acc[`count${index + 1}`] = curr.count;
-      return acc;
-    }, {});
-
-    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, [formattedResult]));
-
+    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, questionListWithStatus));
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);

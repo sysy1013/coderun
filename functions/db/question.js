@@ -82,4 +82,35 @@ const getProblemsByTopic = async (client, topic) => {
     return convertSnakeToCamel.keysToCamel(rows);
 };
 
-module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion,getUserByQuestionAndTopic,getProblemsByTopic};
+const getQuestionCountByTopic = async (client, email) => {
+    const { rows } = await client.query(
+        `
+        SELECT topic, COUNT(*) AS count
+        FROM question
+        WHERE email = $1
+        GROUP BY topic
+        `,
+        [email]
+    );
+    return convertSnakeToCamel.keysToCamel(rows);
+};
+
+const getQuestionsWithStatus = async (client, email) => {
+    const { rows } = await client.query(
+        `
+        SELECT q.id, q.question_text, q.topic,
+            CASE
+                WHEN s.answer = '정답' THEN '정답'
+                WHEN s.answer = '오답' THEN '오답'
+                ELSE '미답변'
+            END AS status
+        FROM question q
+        LEFT JOIN slist s ON q.id = s.question_id AND s.email = $1
+        WHERE q.email = $1
+        ORDER BY q.created_at DESC
+        `,
+        [email]
+    );
+    return convertSnakeToCamel.keysToCamel(rows);
+};
+module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion,getUserByQuestionAndTopic,getProblemsByTopic,getQuestionCountByTopic,getQuestionsWithStatus};
