@@ -5,7 +5,7 @@ const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const jwtHandlers = require('../../../lib/jwtHandlers');
 const dotenv = require('dotenv');
-const { userDB, questionDB } = require('../../../db');
+const { questionDB } = require('../../../db');
 
 module.exports = async (req, res) => {
   const { accesstoken } = req.headers;

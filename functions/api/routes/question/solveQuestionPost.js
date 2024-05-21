@@ -44,6 +44,7 @@ function runPythonCode(code) {
 
 module.exports = async (req, res) => {
     const { accesstoken } = req.headers;
+    const {qeustionId} = req.query;
     const { solve } = req.body;
     let client;
 
@@ -74,7 +75,7 @@ module.exports = async (req, res) => {
         }
 
         console.log('Fetching question list from the database...');
-        const questionList = await questionDB.getUserByQuestion(client, userId);
+        /*const questionList = await questionDB.getUserByQuestion(client, userId);
 
         console.log('User question list:', questionList);
 
@@ -86,10 +87,10 @@ module.exports = async (req, res) => {
         }
         const questionId = latestQuestion.id;
         console.log('Latest question ID:', questionId);
+*/
+        const saveSolve = await questionDB.solvequestion(client, qeustionId,userId, solve, result);
 
-        const saveSolve = await questionDB.solvequestion(client, questionId,userId, solve, result);
-
-        const questionanswer = await questionDB.getQeustionByanswer(client, questionId);
+        const questionanswer = await questionDB.getQeustionByanswer(client, qeustionId);
         console.log('questionanswer:', questionanswer); // 디버깅을 위해 추가
 
         if (!questionanswer) {
@@ -101,7 +102,7 @@ module.exports = async (req, res) => {
         const feedback = await evaluateWithGPT(questionanswer.questionText, questionanswer.result, result);
 
         
-        const saveeqaul = await questionDB.savequalquestion(client,questionId,userId,feedback.tf,feedback.data);
+        const saveeqaul = await questionDB.savequalquestion(client,qeustionId,userId,feedback.tf,feedback.data);
 
 
         res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.CREATE_SUCCESS, saveeqaul));

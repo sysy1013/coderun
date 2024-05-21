@@ -113,4 +113,19 @@ const getQuestionsWithStatus = async (client, email) => {
     );
     return convertSnakeToCamel.keysToCamel(rows);
 };
-module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion,getUserByQuestionAndTopic,getProblemsByTopic,getQuestionCountByTopic,getQuestionsWithStatus};
+
+const repeatQuestionSolve = async (client, email, questionId) => {
+    const { rows } = await client.query(
+        `
+        SELECT q.id, q.question_text, q.answer_text, s.input_sovle, s.result
+        FROM question q
+        LEFT JOIN solve s ON q.id = s.question_id AND s.email = $1
+        WHERE q.id = $2 AND q.email = $1
+        ORDER BY s.created_at DESC
+        LIMIT 1
+        `,
+        [email, questionId]
+    );
+    return convertSnakeToCamel.keysToCamel(rows[0]);
+}
+module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion,getUserByQuestionAndTopic,getProblemsByTopic,getQuestionCountByTopic,getQuestionsWithStatus,repeatQuestionSolve};
