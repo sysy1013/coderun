@@ -148,4 +148,21 @@ const getQeustionByQanswer = async (client, questionId) => {
     );
     return convertSnakeToCamel.keysToCamel(rows[0]);
 }
-module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion,getUserByQuestionAndTopic,getProblemsByTopic,getQuestionCountByTopic,getQuestionsWithStatus,repeatQuestionSolve,getQeustionByQanswer,getTopic};
+
+
+const allQuestionByemail = async (client, email) => {
+    const { rows } = await client.query(
+        `
+        SELECT q.id, q.question_text, q.topic, s.answer
+        FROM question q
+        INNER JOIN slist s ON q.id = s.question_id
+        WHERE s.email = $1
+        `,
+        [email]
+    );
+    return convertSnakeToCamel.keysToCamel(rows);
+};
+
+
+
+module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion,getUserByQuestionAndTopic,getProblemsByTopic,getQuestionCountByTopic,getQuestionsWithStatus,repeatQuestionSolve,getQeustionByQanswer,getTopic,allQuestionByemail};
