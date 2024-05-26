@@ -49,6 +49,16 @@ const getQeustionByanswer = async (client, questionId) => {
     );
     return convertSnakeToCamel.keysToCamel(rows[0]);
 }
+const getTopic = async (client, questionId)=>{
+    const {rows} = await client.query(
+        `
+        SELECT topic FROM question
+        WHERE id = $1
+        `,
+        [questionId]
+    )
+    return convertSnakeToCamel.keysToCamel(rows[0]);
+}
 
 const savequalquestion = async (client, questionId,email,answer,answerData)=>{   
     const { rows } = await client.query(
@@ -138,4 +148,4 @@ const getQeustionByQanswer = async (client, questionId) => {
     );
     return convertSnakeToCamel.keysToCamel(rows[0]);
 }
-module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion,getUserByQuestionAndTopic,getProblemsByTopic,getQuestionCountByTopic,getQuestionsWithStatus,repeatQuestionSolve,getQeustionByQanswer};
+module.exports = {newquestion,solvequestion,getUserByQuestion,getQeustionByanswer,savequalquestion,getUserByQuestionAndTopic,getProblemsByTopic,getQuestionCountByTopic,getQuestionsWithStatus,repeatQuestionSolve,getQeustionByQanswer,getTopic};
