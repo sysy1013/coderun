@@ -24,7 +24,7 @@ async function callChatGPT(topic) {
             model: "gpt-3.5-turbo",
             messages: [{
                 role: 'user',
-                content: `1. 문제 주제 선택: '${topic}'를 주제로 유사한 서로 다른 python 문제 10개를 생성. 이는 중학교 정보 수업과 관련된 문제를 생성.
+                content: `1. 문제 주제 선택: '${topic}'를 주제로 유사한 서로 다른 python 문제 20개를 생성. 이는 중학교 정보 수업과 관련된 문제를 생성.
                 2. 문제 및 해답 제작: 문제는 중학생이 이해하고 풀 수 있도록 명확하고 직관적으로 작성.
                 3. JSON 형식 제공: 문제와 해답을 다음 JSON 형식으로 제공:
                    {
