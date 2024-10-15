@@ -1,4 +1,4 @@
-# 제주대학교 컴퓨터교육과 캡스톤 디자인 1
+# README: 제주대학교 컴퓨터교육과 캡스톤 디자인 1
 
 ## 맞춤형 학습 지원 시스템
 
@@ -15,7 +15,7 @@
    from transformers import BertTokenizer, BertModel
    from sklearn.metrics.pairwise import cosine_similarity
    from konlpy.tag import Okt
-   
+
    stopwords = ['을', '를', '이', '가', '은', '는']
    tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
    model = BertModel.from_pretrained('bert-base-multilingual-cased')
@@ -24,7 +24,7 @@
 
 2. **BERT 모델 및 토크나이저 로드**
    - `BertTokenizer`와 `BertModel`을 미리 로드하여 전역적으로 사용합니다.
-   - `bert-base-multilingual-cased` 모델을 사용해 다국어 텍스트에 대한 임베딩을 생성합니다.
+   - `bert-base-multilingual-cased` 모델을 사용해 한국어 텍스트에 대한 임베딩을 생성합니다.
 
 3. **전처리 함수 (`preprocess_text`)**
    - 한국어 텍스트를 전처리하는 함수입니다.
@@ -76,9 +76,41 @@
        print(f"추천된 문제: {recommended_problem}")
    ```
 
+### Firebase Functions 기반 API 서버
+
+이 프로젝트는 Firebase Functions를 이용하여 RESTful API 서버를 제공합니다. 주요 기능으로는 다음과 같습니다:
+
+1. **Express 앱 초기화 및 미들웨어 설정**
+   - `express`, `cors`, `cookie-parser`, `dotenv` 등의 다양한 미들웨어를 사용하여 서버를 초기화하고 보안을 강화합니다.
+   - `.env` 파일을 통해 보안이 중요한 정보를 관리합니다.
+
+   ```javascript
+   const functions = require("firebase-functions");
+   const express = require("express");
+   const cors = require("cors");
+   const cookieParser = require("cookie-parser");
+   const dotenv = require("dotenv");
+   const hpp = require("hpp");
+   const helmet = require("helmet");
+
+   dotenv.config();
+   const app = express();
+   app.use(cors());
+   app.use(cookieParser());
+   app.use(hpp());
+   app.use(helmet());
+   ```
+
+2. **라우팅 설정**
+   - `api/routes` 디렉토리에서 다양한 엔드포인트를 정의하여 클라이언트 요청을 처리합니다.
+   - 각 엔드포인트는 특정 기능을 수행하도록 설계되어 있습니다.
+
+3. **보안 강화**
+   - `helmet`과 `hpp` 모듈을 사용하여 보안을 강화하고, `cors`를 통해 특정 도메인만 접근할 수 있도록 설정합니다.
+
 ### 시스템의 주요 특징
 - **다양한 라이브러리 지원**: 고급 텍스트 분석을 위해 여러 라이브러리를 조합하여 사용합니다.
-- **다국어 지원**: `bert-base-multilingual-cased` 모델을 사용하여 다양한 언어의 텍스트를 처리할 수 있습니다.
 - **맞춤형 문제 추천**: 사용자의 입력에 기반해 가장 관련성이 높은 문제를 제시하여 학습 효율을 높입니다.
+- **Firebase Functions와 Express 기반 API 서버**: Firebase를 활용하여 손쉽게 배포 가능한 서버리스 아키텍처를 사용합니다.
 
 이 시스템은 사용자의 개별 학습 요구에 맞춰 문제를 추천하고, 맞춤형 학습을 지원하는 것을 목표로 합니다. 직관적이고 사용자 친화적인 기능을 통해 학습의 질을 향상시킬 수 있습니다.
